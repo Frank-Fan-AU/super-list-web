@@ -14,12 +14,18 @@
       "id": "aldi",
       "name": "ALDI",
       "color": "bg-blue-700 hover:bg-blue-800"
+    },
+    {
+      "id": "store_1756641242606",
+      "name": "CHEMIST",
+      "color": "bg-[#be185d] hover:bg-[#be185d]/80"
     }
   ],
   "shoppingLists": {
     "coles": [],
     "shidai": [],
-    "aldi": []
+    "aldi": [],
+    "store_1756641242606": []
   },
-  "lastUpdated": "2024-01-31T12:00:00.000Z"
+  "lastUpdated": "2025-08-31T11:54:02.906Z"
 }

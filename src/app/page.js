@@ -30,6 +30,7 @@ export default function Home() {
   );
   const [showAddStore, setShowAddStore] = useState(false);
   const [newStoreName, setNewStoreName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#dc2626"); // 新增：自定义颜色，默认红色
   const [editMode, setEditMode] = useState(false);
   const [swipedItem, setSwipedItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -171,13 +172,18 @@ export default function Home() {
     }
   };
 
+  // 将十六进制颜色转换为Tailwind CSS类
+  const hexToTailwindClass = (hexColor) => {
+    return `bg-[${hexColor}] hover:bg-[${hexColor}]/80`;
+  };
+
   const addStore = () => {
     if (!newStoreName.trim()) return;
     
     const newStore = {
       id: `store_${Date.now()}`,
       name: newStoreName.trim().toUpperCase(),
-      color: COLORS[stores.length % COLORS.length]
+      color: hexToTailwindClass(selectedColor) // 使用自定义颜色
     };
     
     const newStores = [...stores, newStore];
@@ -189,6 +195,7 @@ export default function Home() {
     setStores(newStores);
     setShoppingLists(newShoppingLists);
     setNewStoreName("");
+    setSelectedColor("#dc2626"); // 重置为默认红色
     setShowAddStore(false);
     
     // 保存数据
@@ -344,15 +351,70 @@ export default function Home() {
               value={newStoreName}
               onChange={(e) => setNewStoreName(e.target.value)}
               placeholder="STORE NAME"
-              className="w-full px-3 py-2 border-2 border-black font-black text-sm tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 mb-3"
+              className="w-full px-3 py-2 border-2 border-black font-black text-base tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 mb-3"
               onKeyPress={(e) => e.key === 'Enter' && addStore()}
               autoFocus
             />
+            
+            {/* 自定义颜色选择器 */}
+            <div className="mb-3">
+              <p className="text-xs font-black mb-2 tracking-wide">CHOOSE COLOR:</p>
+              <div className="flex items-center gap-3">
+                {/* 颜色预览 */}
+                <div 
+                  className="w-12 h-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  style={{ backgroundColor: selectedColor }}
+                ></div>
+                
+                {/* 颜色选择器 */}
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="w-12 h-8 border-2 border-black cursor-pointer bg-transparent"
+                  title="选择颜色"
+                />
+                
+                {/* 颜色值显示 */}
+                <span className="text-xs font-black tracking-wide text-gray-600">
+                  {selectedColor.toUpperCase()}
+                </span>
+              </div>
+              
+              {/* 快速颜色选择 */}
+              <div className="mt-2">
+                <p className="text-xs font-black mb-1 tracking-wide text-gray-600">QUICK COLORS:</p>
+                <div className="flex gap-1">
+                  {[
+                    "#dc2626", // 红色
+                    "#ca8a04", // 黄色
+                    "#1d4ed8", // 蓝色
+                    "#000000", // 黑色
+                    "#15803d", // 绿色
+                    "#7c2d12", // 紫色
+                    "#be185d", // 粉色
+                    "#1e40af"  // 靛蓝色
+                  ].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`w-6 h-6 border border-black hover:scale-110 transition-transform ${
+                        selectedColor === color ? 'ring-2 ring-black' : ''
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    ></button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
             <div className="flex gap-2">
               <button
                 onClick={() => {
                   setShowAddStore(false);
                   setNewStoreName("");
+                  setSelectedColor("#dc2626");
                 }}
                 className="flex-1 px-3 py-2 border-2 border-black text-black font-black hover:bg-gray-200 transition-all transform hover:scale-105 tracking-wide text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
               >
