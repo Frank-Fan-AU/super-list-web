@@ -282,7 +282,7 @@ export default function Home() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="ADD PRODUCT..."
-            className="w-full px-4 py-2 bg-white text-black border-2 border-black font-black text-sm tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 transition-all"
+            className="w-full px-4 py-2 bg-white text-black border-2 border-black font-black text-base tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 transition-all"
             onKeyPress={(e) => e.key === 'Enter' && stores.length > 0 && addItem(stores[0].id)}
           />
           
