@@ -19,72 +19,108 @@ const COLORS = [
   "bg-indigo-700 hover:bg-indigo-800",
 ];
 
+// localStorage存储键名
+const STORAGE_KEY = 'slist-data';
+
+// 获取默认数据
+const getDefaultData = () => {
+  const defaultShoppingLists = {};
+  DEFAULT_STORES.forEach(store => {
+    defaultShoppingLists[store.id] = [];
+  });
+  
+  return {
+    stores: DEFAULT_STORES,
+    shoppingLists: defaultShoppingLists
+  };
+};
+
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
-  const [stores, setStores] = useState(DEFAULT_STORES);
-  const [shoppingLists, setShoppingLists] = useState(
-    DEFAULT_STORES.reduce((acc, store) => {
-      acc[store.id] = [];
-      return acc;
-    }, {})
-  );
+  const [stores, setStores] = useState([]);
+  const [shoppingLists, setShoppingLists] = useState({});
   const [showAddStore, setShowAddStore] = useState(false);
   const [newStoreName, setNewStoreName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#dc2626"); // 新增：自定义颜色，默认红色
+  const [selectedColor, setSelectedColor] = useState("#dc2626");
   const [editMode, setEditMode] = useState(false);
   const [swipedItem, setSwipedItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
+  const [saveStatus, setSaveStatus] = useState('');
 
-  // 加载数据
-  const loadData = async () => {
+  // 从localStorage加载数据
+  const loadData = () => {
     try {
-      const response = await fetch('/api/data');
-      const data = await response.json();
+      const savedData = localStorage.getItem(STORAGE_KEY);
       
-      setStores(data.stores || DEFAULT_STORES);
-      setShoppingLists(data.shoppingLists || {});
-      setIsLoading(false);
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        // 确保数据结构完整
+        const validStores = Array.isArray(data.stores) ? data.stores : DEFAULT_STORES;
+        const validShoppingLists = data.shoppingLists && typeof data.shoppingLists === 'object' 
+          ? data.shoppingLists 
+          : getDefaultData().shoppingLists;
+        
+        setStores(validStores);
+        setShoppingLists(validShoppingLists);
+      } else {
+        // 首次使用，设置默认数据
+        const defaultData = getDefaultData();
+        setStores(defaultData.stores);
+        setShoppingLists(defaultData.shoppingLists);
+        // 异步保存默认数据，避免阻塞渲染
+        setTimeout(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+        }, 0);
+      }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading data from localStorage:', error);
+      // 如果localStorage出错，使用默认数据
+      const defaultData = getDefaultData();
+      setStores(defaultData.stores);
+      setShoppingLists(defaultData.shoppingLists);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  // 保存数据
-  const saveData = async (newStores = stores, newShoppingLists = shoppingLists) => {
+  // 保存数据到localStorage
+  const saveData = (newStores = stores, newShoppingLists = shoppingLists) => {
     try {
       setSaveStatus('saving');
       
-      const response = await fetch('/api/data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          stores: newStores,
-          shoppingLists: newShoppingLists,
-        }),
-      });
+      const dataToSave = {
+        stores: newStores,
+        shoppingLists: newShoppingLists,
+        lastUpdated: new Date().toISOString()
+      };
       
-      if (response.ok) {
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus(''), 2000);
-      } else {
-        setSaveStatus('error');
-        setTimeout(() => setSaveStatus(''), 3000);
-      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+      
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(''), 2000);
     } catch (error) {
-      console.error('Error saving data:', error);
+      console.error('Error saving data to localStorage:', error);
       setSaveStatus('error');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
 
-  // 页面加载时读取数据
+  // 页面加载时读取数据 - 只执行一次
   useEffect(() => {
     loadData();
-  }, []);
+  }, []); // 空依赖数组，确保只执行一次
+
+  // 防止在加载期间渲染
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-black mb-2">SLIST</div>
+          <div className="text-sm">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   const addItem = (storeId) => {
     if (!inputValue.trim()) {
@@ -183,7 +219,7 @@ export default function Home() {
     const newStore = {
       id: `store_${Date.now()}`,
       name: newStoreName.trim().toUpperCase(),
-      color: hexToTailwindClass(selectedColor) // 使用自定义颜色
+      color: hexToTailwindClass(selectedColor)
     };
     
     const newStores = [...stores, newStore];
@@ -195,7 +231,7 @@ export default function Home() {
     setStores(newStores);
     setShoppingLists(newShoppingLists);
     setNewStoreName("");
-    setSelectedColor("#dc2626"); // 重置为默认红色
+    setSelectedColor("#dc2626");
     setShowAddStore(false);
     
     // 保存数据

@@ -22,10 +22,16 @@
     }
   ],
   "shoppingLists": {
-    "coles": [],
+    "coles": [
+      {
+        "id": 1756641728195,
+        "text": "蒜末",
+        "completed": false
+      }
+    ],
     "shidai": [],
     "aldi": [],
     "store_1756641242606": []
   },
-  "lastUpdated": "2025-08-31T11:54:02.906Z"
+  "lastUpdated": "2025-08-31T12:02:08.465Z"
 }
