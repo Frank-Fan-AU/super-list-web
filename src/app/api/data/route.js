@@ -15,20 +15,14 @@ function ensureDataDir() {
 // 默认数据
 const DEFAULT_DATA = {
   stores: [
-    { id: "target", name: "TARGET", color: "bg-black hover:bg-gray-800" },
-    { id: "walmart", name: "WALMART", color: "bg-red-600 hover:bg-red-700" },
-    { id: "kroger", name: "KROGER", color: "bg-black hover:bg-gray-800" },
-    { id: "wholefoods", name: "WHOLE FOODS", color: "bg-green-700 hover:bg-green-800" },
-    { id: "costco", name: "COSTCO", color: "bg-red-600 hover:bg-red-700" },
-    { id: "safeway", name: "SAFEWAY", color: "bg-black hover:bg-gray-800" },
+    { id: "coles", name: "COLES", color: "bg-red-600 hover:bg-red-700" },
+    { id: "shidai", name: "时代", color: "bg-yellow-600 hover:bg-yellow-700" },
+    { id: "aldi", name: "ALDI", color: "bg-blue-700 hover:bg-blue-800" },
   ],
   shoppingLists: {
-    "target": [],
-    "walmart": [],
-    "kroger": [],
-    "wholefoods": [],
-    "costco": [],
-    "safeway": []
+    "coles": [],
+    "shidai": [],
+    "aldi": []
   },
   lastUpdated: new Date().toISOString()
 };

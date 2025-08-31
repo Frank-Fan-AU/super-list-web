@@ -3,21 +3,18 @@
 import { useState, useEffect } from "react";
 
 const DEFAULT_STORES = [
-  { id: "target", name: "TARGET", color: "bg-black hover:bg-gray-800" },
-  { id: "walmart", name: "WALMART", color: "bg-red-600 hover:bg-red-700" },
-  { id: "kroger", name: "KROGER", color: "bg-black hover:bg-gray-800" },
-  { id: "wholefoods", name: "WHOLE FOODS", color: "bg-green-700 hover:bg-green-800" },
-  { id: "costco", name: "COSTCO", color: "bg-red-600 hover:bg-red-700" },
-  { id: "safeway", name: "SAFEWAY", color: "bg-black hover:bg-gray-800" },
+  { id: "coles", name: "COLES", color: "bg-red-600 hover:bg-red-700" },
+  { id: "shidai", name: "时代", color: "bg-yellow-600 hover:bg-yellow-700" },
+  { id: "aldi", name: "ALDI", color: "bg-blue-700 hover:bg-blue-800" },
 ];
 
 const COLORS = [
-  "bg-black hover:bg-gray-800",
   "bg-red-600 hover:bg-red-700",
-  "bg-green-700 hover:bg-green-800",
-  "bg-blue-700 hover:bg-blue-800",
-  "bg-purple-700 hover:bg-purple-800",
   "bg-yellow-600 hover:bg-yellow-700",
+  "bg-blue-700 hover:bg-blue-800",
+  "bg-black hover:bg-gray-800",
+  "bg-green-700 hover:bg-green-800",
+  "bg-purple-700 hover:bg-purple-800",
   "bg-pink-600 hover:bg-pink-700",
   "bg-indigo-700 hover:bg-indigo-800",
 ];
@@ -321,7 +318,7 @@ export default function Home() {
               onClick={() => setShowAddStore(true)}
               className="bg-gray-300 hover:bg-gray-400 hover:scale-105 text-black font-black py-2 px-3 border-2 border-black transition-all transform text-xs tracking-wide flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
-              <span className="text-lg font-black">+</span>
+              <span className="text-xs font-black">+</span>
             </button>
           </div>
           
