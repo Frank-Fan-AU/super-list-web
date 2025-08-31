@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const DEFAULT_STORES = [
   { id: "target", name: "TARGET", color: "bg-black hover:bg-gray-800" },
@@ -35,6 +35,58 @@ export default function Home() {
   const [newStoreName, setNewStoreName] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [swipedItem, setSwipedItem] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
+
+  // 加载数据
+  const loadData = async () => {
+    try {
+      const response = await fetch('/api/data');
+      const data = await response.json();
+      
+      setStores(data.stores || DEFAULT_STORES);
+      setShoppingLists(data.shoppingLists || {});
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setIsLoading(false);
+    }
+  };
+
+  // 保存数据
+  const saveData = async (newStores = stores, newShoppingLists = shoppingLists) => {
+    try {
+      setSaveStatus('saving');
+      
+      const response = await fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          stores: newStores,
+          shoppingLists: newShoppingLists,
+        }),
+      });
+      
+      if (response.ok) {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus(''), 2000);
+      } else {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error saving data:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 3000);
+    }
+  };
+
+  // 页面加载时读取数据
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const addItem = (storeId) => {
     if (!inputValue.trim()) {
@@ -48,29 +100,39 @@ export default function Home() {
       completed: false,
     };
 
-    setShoppingLists(prev => ({
-      ...prev,
-      [storeId]: [...(prev[storeId] || []), newItem]
-    }));
+    const newShoppingLists = {
+      ...shoppingLists,
+      [storeId]: [...(shoppingLists[storeId] || []), newItem]
+    };
     
+    setShoppingLists(newShoppingLists);
     setInputValue("");
+    
+    // 保存数据
+    saveData(stores, newShoppingLists);
   };
 
   const toggleItem = (storeId, itemId) => {
-    setShoppingLists(prev => ({
-      ...prev,
-      [storeId]: prev[storeId].map(item => 
+    const newShoppingLists = {
+      ...shoppingLists,
+      [storeId]: shoppingLists[storeId].map(item => 
         item.id === itemId ? { ...item, completed: !item.completed } : item
       )
-    }));
+    };
+    
+    setShoppingLists(newShoppingLists);
+    saveData(stores, newShoppingLists);
   };
 
   const deleteItem = (storeId, itemId) => {
-    setShoppingLists(prev => ({
-      ...prev,
-      [storeId]: prev[storeId].filter(item => item.id !== itemId)
-    }));
+    const newShoppingLists = {
+      ...shoppingLists,
+      [storeId]: shoppingLists[storeId].filter(item => item.id !== itemId)
+    };
+    
+    setShoppingLists(newShoppingLists);
     setSwipedItem(null);
+    saveData(stores, newShoppingLists);
   };
 
   const handleTouchStart = (e, itemId) => {
@@ -121,23 +183,31 @@ export default function Home() {
       color: COLORS[stores.length % COLORS.length]
     };
     
-    setStores(prev => [...prev, newStore]);
-    setShoppingLists(prev => ({
-      ...prev,
+    const newStores = [...stores, newStore];
+    const newShoppingLists = {
+      ...shoppingLists,
       [newStore.id]: []
-    }));
+    };
     
+    setStores(newStores);
+    setShoppingLists(newShoppingLists);
     setNewStoreName("");
     setShowAddStore(false);
+    
+    // 保存数据
+    saveData(newStores, newShoppingLists);
   };
 
   const deleteStore = (storeId) => {
-    setStores(prev => prev.filter(store => store.id !== storeId));
-    setShoppingLists(prev => {
-      const newLists = { ...prev };
-      delete newLists[storeId];
-      return newLists;
-    });
+    const newStores = stores.filter(store => store.id !== storeId);
+    const newShoppingLists = { ...shoppingLists };
+    delete newShoppingLists[storeId];
+    
+    setStores(newStores);
+    setShoppingLists(newShoppingLists);
+    
+    // 保存数据
+    saveData(newStores, newShoppingLists);
   };
 
   const archiveAndClear = () => {
@@ -168,7 +238,9 @@ export default function Home() {
     stores.forEach(store => {
       clearedLists[store.id] = [];
     });
+    
     setShoppingLists(clearedLists);
+    saveData(stores, clearedLists);
   };
 
   const hasAnyItems = Object.values(shoppingLists).some(list => list && list.length > 0);
@@ -182,16 +254,29 @@ export default function Home() {
             <h1 className="text-2xl font-black tracking-wide transform -skew-x-6 bg-white text-black px-3 py-1 border-2 border-black">
               SLIST
             </h1>
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className={`px-3 py-1 font-black text-xs tracking-wide border-2 transition-all transform hover:scale-105 ${
-                editMode 
-                  ? 'bg-red-600 text-white border-red-600 hover:bg-red-700' 
-                  : 'bg-white text-black border-white hover:bg-gray-200'
-              }`}
-            >
-              {editMode ? 'DONE' : 'EDIT'}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* 保存状态指示器 */}
+              {saveStatus && (
+                <div className={`px-2 py-1 text-xs font-black border-2 ${
+                  saveStatus === 'saving' ? 'bg-yellow-500 border-yellow-500 text-black' :
+                  saveStatus === 'saved' ? 'bg-green-500 border-green-500 text-white' :
+                  'bg-red-500 border-red-500 text-white'
+                }`}>
+                  {saveStatus === 'saving' ? 'SAVING...' :
+                   saveStatus === 'saved' ? 'SAVED' : 'ERROR'}
+                </div>
+              )}
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className={`px-3 py-1 font-black text-xs tracking-wide border-2 transition-all transform hover:scale-105 ${
+                  editMode 
+                    ? 'bg-red-600 text-white border-red-600 hover:bg-red-700' 
+                    : 'bg-white text-black border-white hover:bg-gray-200'
+                }`}
+              >
+                {editMode ? 'DONE' : 'EDIT'}
+              </button>
+            </div>
           </div>
           
           {/* Input - 紧凑版 */}

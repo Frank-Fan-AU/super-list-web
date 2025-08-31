@@ -1,0 +1,55 @@
+{
+  "stores": [
+    {
+      "id": "target",
+      "name": "TARGET",
+      "color": "bg-black hover:bg-gray-800"
+    },
+    {
+      "id": "walmart",
+      "name": "WALMART",
+      "color": "bg-red-600 hover:bg-red-700"
+    },
+    {
+      "id": "kroger",
+      "name": "KROGER",
+      "color": "bg-black hover:bg-gray-800"
+    },
+    {
+      "id": "wholefoods",
+      "name": "WHOLE FOODS",
+      "color": "bg-green-700 hover:bg-green-800"
+    },
+    {
+      "id": "costco",
+      "name": "COSTCO",
+      "color": "bg-red-600 hover:bg-red-700"
+    },
+    {
+      "id": "safeway",
+      "name": "SAFEWAY",
+      "color": "bg-black hover:bg-gray-800"
+    }
+  ],
+  "shoppingLists": {
+    "target": [
+      {
+        "id": 1756640285048,
+        "text": "dddd",
+        "completed": true
+      }
+    ],
+    "walmart": [],
+    "kroger": [
+      {
+        "id": 1756640289576,
+        "text": "ssss",
+        "completed": false
+      }
+    ],
+    "wholefoods": [],
+    "costco": [],
+    "safeway": []
+  },
+  "lastUpdated": "2025-08-31T11:38:32.775Z"
+}
