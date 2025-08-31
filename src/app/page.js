@@ -1,103 +1,376 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+
+const DEFAULT_STORES = [
+  { id: "target", name: "TARGET", color: "bg-black hover:bg-gray-800" },
+  { id: "walmart", name: "WALMART", color: "bg-red-600 hover:bg-red-700" },
+  { id: "kroger", name: "KROGER", color: "bg-black hover:bg-gray-800" },
+  { id: "wholefoods", name: "WHOLE FOODS", color: "bg-green-700 hover:bg-green-800" },
+  { id: "costco", name: "COSTCO", color: "bg-red-600 hover:bg-red-700" },
+  { id: "safeway", name: "SAFEWAY", color: "bg-black hover:bg-gray-800" },
+];
+
+const COLORS = [
+  "bg-black hover:bg-gray-800",
+  "bg-red-600 hover:bg-red-700",
+  "bg-green-700 hover:bg-green-800",
+  "bg-blue-700 hover:bg-blue-800",
+  "bg-purple-700 hover:bg-purple-800",
+  "bg-yellow-600 hover:bg-yellow-700",
+  "bg-pink-600 hover:bg-pink-700",
+  "bg-indigo-700 hover:bg-indigo-800",
+];
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [inputValue, setInputValue] = useState("");
+  const [stores, setStores] = useState(DEFAULT_STORES);
+  const [shoppingLists, setShoppingLists] = useState(
+    DEFAULT_STORES.reduce((acc, store) => {
+      acc[store.id] = [];
+      return acc;
+    }, {})
+  );
+  const [showAddStore, setShowAddStore] = useState(false);
+  const [newStoreName, setNewStoreName] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [swipedItem, setSwipedItem] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const addItem = (storeId) => {
+    if (!inputValue.trim()) {
+      alert('请先输入商品名称！');
+      return;
+    }
+    
+    const newItem = {
+      id: Date.now(),
+      text: inputValue.trim(),
+      completed: false,
+    };
+
+    setShoppingLists(prev => ({
+      ...prev,
+      [storeId]: [...(prev[storeId] || []), newItem]
+    }));
+    
+    setInputValue("");
+  };
+
+  const toggleItem = (storeId, itemId) => {
+    setShoppingLists(prev => ({
+      ...prev,
+      [storeId]: prev[storeId].map(item => 
+        item.id === itemId ? { ...item, completed: !item.completed } : item
+      )
+    }));
+  };
+
+  const deleteItem = (storeId, itemId) => {
+    setShoppingLists(prev => ({
+      ...prev,
+      [storeId]: prev[storeId].filter(item => item.id !== itemId)
+    }));
+    setSwipedItem(null);
+  };
+
+  const handleTouchStart = (e, itemId) => {
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    let moved = false;
+
+    const handleTouchMove = (e) => {
+      const touch = e.touches[0];
+      const deltaX = startX - touch.clientX;
+      const deltaY = Math.abs(startY - touch.clientY);
+      
+      if (deltaY > 30) return;
+      
+      if (deltaX > 50 && !moved) {
+        setSwipedItem(itemId);
+        moved = true;
+      } else if (deltaX < -20 && moved) {
+        setSwipedItem(null);
+        moved = false;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
+  const handleItemClick = (storeId, itemId, e) => {
+    if (swipedItem === itemId) {
+      setSwipedItem(null);
+    } else {
+      toggleItem(storeId, itemId);
+    }
+  };
+
+  const addStore = () => {
+    if (!newStoreName.trim()) return;
+    
+    const newStore = {
+      id: `store_${Date.now()}`,
+      name: newStoreName.trim().toUpperCase(),
+      color: COLORS[stores.length % COLORS.length]
+    };
+    
+    setStores(prev => [...prev, newStore]);
+    setShoppingLists(prev => ({
+      ...prev,
+      [newStore.id]: []
+    }));
+    
+    setNewStoreName("");
+    setShowAddStore(false);
+  };
+
+  const deleteStore = (storeId) => {
+    setStores(prev => prev.filter(store => store.id !== storeId));
+    setShoppingLists(prev => {
+      const newLists = { ...prev };
+      delete newLists[storeId];
+      return newLists;
+    });
+  };
+
+  const archiveAndClear = () => {
+    let archiveContent = `SLIST ARCHIVE - ${new Date().toLocaleString('zh-CN')}\n\n`;
+    
+    stores.forEach(store => {
+      const items = shoppingLists[store.id] || [];
+      if (items.length > 0) {
+        archiveContent += `${store.name}:\n`;
+        items.forEach(item => {
+          archiveContent += `${item.completed ? '[X]' : '[ ]'} ${item.text}\n`;
+        });
+        archiveContent += '\n';
+      }
+    });
+
+    const blob = new Blob([archiveContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `slist-archive-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    const clearedLists = {};
+    stores.forEach(store => {
+      clearedLists[store.id] = [];
+    });
+    setShoppingLists(clearedLists);
+  };
+
+  const hasAnyItems = Object.values(shoppingLists).some(list => list && list.length > 0);
+
+  return (
+    <div className="min-h-screen bg-white text-black font-mono">
+      {/* Header - 紧凑版 */}
+      <div className="bg-black text-white border-b-4 border-black sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-2xl font-black tracking-wide transform -skew-x-6 bg-white text-black px-3 py-1 border-2 border-black">
+              SLIST
+            </h1>
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className={`px-3 py-1 font-black text-xs tracking-wide border-2 transition-all transform hover:scale-105 ${
+                editMode 
+                  ? 'bg-red-600 text-white border-red-600 hover:bg-red-700' 
+                  : 'bg-white text-black border-white hover:bg-gray-200'
+              }`}
+            >
+              {editMode ? 'DONE' : 'EDIT'}
+            </button>
+          </div>
+          
+          {/* Input - 紧凑版 */}
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="ADD PRODUCT..."
+            className="w-full px-4 py-2 bg-white text-black border-2 border-black font-black text-sm tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 transition-all"
+            onKeyPress={(e) => e.key === 'Enter' && stores.length > 0 && addItem(stores[0].id)}
+          />
+          
+          {/* Store Buttons - 紧凑网格 */}
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            {stores.map(store => (
+              <div key={store.id} className="relative">
+                <button
+                  onClick={() => !editMode && addItem(store.id)}
+                  disabled={editMode}
+                  className={`${store.color} ${editMode ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'} text-white font-black py-2 px-3 border-2 border-black transition-all transform text-xs tracking-wide w-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]`}
+                >
+                  {store.name}
+                  {!editMode && shoppingLists[store.id] && shoppingLists[store.id].length > 0 && (
+                    <span className="ml-1 bg-white text-black rounded-none px-1 py-0.5 text-xs font-black border border-black">
+                      {shoppingLists[store.id].length}
+                    </span>
+                  )}
+                </button>
+                {editMode && (
+                  <button
+                    onClick={() => deleteStore(store.id)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 hover:bg-red-700 text-white border-2 border-black flex items-center justify-center text-sm font-black transition-all transform hover:scale-110 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            
+            {/* Add Store Button - 紧凑版 */}
+            <button
+              onClick={() => setShowAddStore(true)}
+              className="bg-gray-300 hover:bg-gray-400 hover:scale-105 text-black font-black py-2 px-3 border-2 border-black transition-all transform text-xs tracking-wide flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <span className="text-lg font-black">+</span>
+            </button>
+          </div>
+          
+          {editMode && (
+            <div className="mt-2 text-center">
+              <p className="text-white font-black text-xs tracking-wide bg-red-600 px-2 py-1 border-2 border-white inline-block transform -skew-x-3">
+                CLICK × TO DELETE
+              </p>
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+
+      {/* Add Store Modal - 紧凑版 */}
+      {showAddStore && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 px-4">
+          <div className="bg-white border-4 border-black p-4 w-full max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <h3 className="text-lg font-black mb-3 tracking-wide text-center bg-black text-white px-3 py-1 border-2 border-black transform -skew-x-3">
+              ADD STORE
+            </h3>
+            <input
+              type="text"
+              value={newStoreName}
+              onChange={(e) => setNewStoreName(e.target.value)}
+              placeholder="STORE NAME"
+              className="w-full px-3 py-2 border-2 border-black font-black text-sm tracking-wide placeholder-gray-500 focus:outline-none focus:border-red-600 focus:bg-yellow-100 mb-3"
+              onKeyPress={(e) => e.key === 'Enter' && addStore()}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowAddStore(false);
+                  setNewStoreName("");
+                }}
+                className="flex-1 px-3 py-2 border-2 border-black text-black font-black hover:bg-gray-200 transition-all transform hover:scale-105 tracking-wide text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={addStore}
+                disabled={!newStoreName.trim()}
+                className="flex-1 px-3 py-2 bg-black hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white border-2 border-black font-black transition-all transform hover:scale-105 tracking-wide text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+              >
+                ADD
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shopping Lists - 紧凑卡片 */}
+      <div className="max-w-md mx-auto px-4 py-3">
+        {stores.map(store => {
+          const items = shoppingLists[store.id] || [];
+          if (items.length === 0) return null;
+          
+          return (
+            <div key={store.id} className="mb-4">
+              <div className="flex items-center mb-2 bg-black text-white px-3 py-2 border-2 border-black transform -skew-x-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
+                <div className={`w-3 h-3 border border-white mr-2 ${store.color.split(' ')[0]}`}></div>
+                <h2 className="font-black text-sm tracking-wide">{store.name}</h2>
+                <span className="ml-auto text-xs font-black bg-white text-black px-1 py-0.5 border border-white">
+                  {items.length}
+                </span>
+              </div>
+              
+              <div className="space-y-1">
+                {items.map(item => (
+                  <div
+                    key={item.id}
+                    className="bg-white border-2 border-black overflow-hidden relative shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    {/* 商品内容区域 */}
+                    <div 
+                      className={`flex items-center transition-transform duration-200 ${
+                        swipedItem === item.id ? '-translate-x-16' : 'translate-x-0'
+                      }`}
+                      onTouchStart={(e) => handleTouchStart(e, item.id)}
+                    >
+                      <button
+                        onClick={(e) => handleItemClick(store.id, item.id, e)}
+                        className="flex-1 px-3 py-2 text-left hover:bg-gray-100 transition-colors font-black tracking-wide"
+                      >
+                        <span className={`text-sm ${
+                          item.completed 
+                            ? 'line-through text-gray-500 bg-gray-200 px-1 py-0.5' 
+                            : 'text-black'
+                        }`}>
+                          {item.text.toUpperCase()}
+                        </span>
+                      </button>
+                    </div>
+                    
+                    {/* 删除按钮区域 - 更窄 */}
+                    <div className={`absolute top-0 right-0 h-full w-16 bg-red-600 border-l-2 border-black flex items-center justify-center transition-transform duration-200 ${
+                      swipedItem === item.id ? 'translate-x-0' : 'translate-x-full'
+                    }`}>
+                      <button
+                        onClick={() => deleteItem(store.id, item.id)}
+                        className="text-white hover:bg-red-700 w-full h-full flex items-center justify-center transition-colors font-black text-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* Archive Button - 紧凑版 */}
+        {hasAnyItems && (
+          <div className="mt-6">
+            <button
+              onClick={archiveAndClear}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-3 px-4 border-2 border-black transition-all transform hover:scale-105 flex items-center justify-center tracking-wide text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
+              <span className="mr-2 text-lg">↓</span>
+              ARCHIVE & CLEAR ALL
+            </button>
+          </div>
+        )}
+        
+        {!hasAnyItems && (
+          <div className="text-center py-8">
+            <div className="bg-black text-white px-4 py-3 border-2 border-black inline-block transform rotate-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
+              <div className="text-2xl font-black mb-1">📝</div>
+              <p className="font-black tracking-wide text-sm">ADD PRODUCTS<br/>TO START!</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
